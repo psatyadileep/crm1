@@ -3,12 +3,17 @@
   background-color: #ebeff5;
  }
 
- .navbar-brand {
-  height: auto;
+ .navbar-brand { 
+  max-height: 20px;
+  max-width: 30%; 
+  overflow: visible;
+  padding-top: 0;
+  padding-bottom: 40px; 
 }
 
 img {
-  max-width:100%;
+ max-width: 60px; 
+ height: auto; 
 }
 
 
