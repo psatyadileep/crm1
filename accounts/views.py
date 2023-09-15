@@ -1,3 +1,5 @@
+from django.contrib.auth.models import Group
+
 from django.shortcuts import render , redirect
 from django.http import HttpResponse 
 from django.forms import inlineformset_factory
@@ -6,7 +8,6 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 
 from django.contrib.auth. decorators import login_required
-from django.contrib.auth.models import Group
 
 import logging
 # Create your views here.
@@ -52,7 +53,9 @@ def registerPage(request):
         if form.is_valid():
             user = form.save()
             username = form.cleaned_data.get('username')
-
+            group = Group.objects.get(name="customer")
+            user.groups.add(group)
+            Customer.objects.create(user=user, name=user.username)
             messages.success(request,'Account was Created for' + username )
             return redirect("login")
 
@@ -188,5 +191,35 @@ def deleteOrder(request,pk):
     context ={"item":order}
 
     return render(request,"accounts/delete.html", context)
+
+
+
+
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin'])
+def updateCustomer(request, pk):
+    form = CustomerForm()  # Initialize form here
+
+    try:
+        customer = Customer.objects.get(id=pk)
+    except Customer.DoesNotExist:
+        print(f"Customer with id {pk} does not exist.")
+        return HttpResponse("Customer not found", status=404)
+    
+    if customer.profile_pic:
+        print(f"Profile Picture URL: {customer.profile_pic.url}")
+
+    if request.method == "POST":
+        form = CustomerForm(request.POST, request.FILES, instance=customer)
+        if form.is_valid():
+            form.save()
+            print("Form saved successfully")
+        else:
+            print("Form is invalid")
+
+    context = {'form': form, 'customer': customer}
+    return render(request, "accounts/account_settings.html", context)
+
 
 

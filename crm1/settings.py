@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
+from storages.backends.s3boto3 import S3Boto3Storage
 import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +22,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure--mjy9gkt*k4$2h!+r8-b0lkh8-^6@8ld+f6bfy73j$gi$t&@pn'
+SECRET_KEY = config('SECRET_KEY')
 
+# SECRET_KEY  = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -38,7 +41,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'accounts',
-    'django_filters'
+    'django_filters',
+    'django_extensions',
+    'storages',
 ]
 
 MIDDLEWARE = [
@@ -77,8 +82,12 @@ WSGI_APPLICATION = 'crm1.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config("DATABASE_NAME"),
+        'USER': config("DATABASE_USER"),
+        'PASSWORD': config("DATABASE_PASSWORD"),
+        'HOST': config("DATABASE_HOST"),
+        'PORT': config("DATABASE_PORT")
     }
 }
 
@@ -113,17 +122,29 @@ USE_I18N = True
 
 USE_TZ = True
 
+STATIC_URL = '/static/'
+
+MEDIA_URL = '/images/'
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static')
+]
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'static/images')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = '/static/'
+# STATIC_URL = '/static/'
 
-MEDIA_URL = "/images/"
+# MEDIA_URL = "/images/"
 
-STATICFILES_DIRS = [os.path.join(BASE_DIR,'static')]
+# STATICFILES_DIRS = [os.path.join(BASE_DIR,'static')]
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'static/images')
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'static/images')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -132,3 +153,24 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 #SMTP CONFIG
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = config("EMAIL_HOST")
+EMAIL_PORT  = config("EMAIL_PORT")
+EMAIL_HOST_USER = config("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
+EMAIL_USE_TLS= True
+EMAIL_USE_SSL = False
+
+
+AWS_S3_ACCESS_KEY_ID = config("AWS_S3_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME")
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = None
+
+STATIC_URL = 'https://%s.s3.amazonaws.com/static/' % AWS_STORAGE_BUCKET_NAME
+
+# Use S3 for media files
+MEDIA_URL = 'https://%s.s3.amazonaws.com/media/' % AWS_STORAGE_BUCKET_NAME
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
